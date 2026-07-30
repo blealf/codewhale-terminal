@@ -2,7 +2,7 @@
   "name": "codewhale-launcher",
   "displayName": "CodeWhale Launcher",
   "description": "Launch the locally installed CodeWhale CLI from a dedicated VS Code integrated terminal.",
-  "version": "0.1.1",
+  "version": "0.0.1",
   "publisher": "codewhale",
   "engines": {
     "vscode": "^1.79.0"
@@ -13,10 +13,13 @@
   "activationEvents": [
     "onCommand:codewhaleLauncher.open",
     "onCommand:codewhaleLauncher.restart",
-    "onCommand:codewhaleLauncher.stop",
-    "onView:codewhaleLauncherView"
+    "onCommand:codewhaleLauncher.stop"
   ],
   "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blealf/codewhale-terminal"
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -27,7 +30,11 @@
       {
         "command": "codewhaleLauncher.open",
         "title": "CodeWhale: Open",
-        "category": "CodeWhale"
+        "category": "CodeWhale",
+        "icon": {
+          "light": "media/codewhale.svg",
+          "dark": "media/codewhale.svg"
+        }
       },
       {
         "command": "codewhaleLauncher.restart",
@@ -40,6 +47,14 @@
         "category": "CodeWhale"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "codewhaleLauncher.open",
+          "group": "navigation@1"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "CodeWhale Launcher",
@@ -50,23 +65,6 @@
           "description": "Executable used to launch CodeWhale from the integrated terminal."
         }
       }
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "codewhaleLauncher",
-          "title": "CodeWhale",
-          "icon": "media/codewhale.svg"
-        }
-      ]
-    },
-    "views": {
-      "codewhaleLauncher": [
-        {
-          "id": "codewhaleLauncherView",
-          "name": "Launcher"
-        }
-      ]
     }
   },
   "devDependencies": {

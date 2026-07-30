@@ -1,6 +1,16 @@
-import { Disposable, Terminal, ViewColumn, window } from 'vscode';
-import { terminalName, messages } from './constants';
+import { commands as vscodeCommands, Disposable, Terminal, ViewColumn, window } from 'vscode';
+import {
+  activeTerminalPollAttempts,
+  activeTerminalPollIntervalMs,
+  lockGroupCommand,
+  messages,
+  terminalName
+} from './constants';
 import { ActivationState } from './types';
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 export class TerminalManager implements Disposable {
   private terminal?: Terminal;
@@ -26,24 +36,27 @@ export class TerminalManager implements Disposable {
   async open(command: string, cwd: string): Promise<void> {
     const existingTerminal = this.findAvailableTerminal();
     if (existingTerminal) {
-      existingTerminal.show(true);
+      existingTerminal.show(false);
       this.terminal = existingTerminal;
       this.state = 'running';
+      await this.lockTerminalGroup(existingTerminal);
       return;
     }
 
     const terminal = this.createTerminal(cwd);
-    terminal.show(true);
+    terminal.show(false);
     terminal.sendText(command, true);
     this.state = 'running';
+    await this.lockTerminalGroup(terminal);
   }
 
   async restart(command: string, cwd: string): Promise<void> {
     this.disposeTerminal();
     const terminal = this.createTerminal(cwd);
-    terminal.show(true);
+    terminal.show(false);
     terminal.sendText(command, true);
     this.state = 'running';
+    await this.lockTerminalGroup(terminal);
   }
 
   stop(): void {
@@ -60,7 +73,8 @@ export class TerminalManager implements Disposable {
         name: terminalName,
         cwd,
         location: {
-          viewColumn: ViewColumn.One
+          viewColumn: ViewColumn.Beside,
+          preserveFocus: false
         }
       });
       this.state = 'launching';
@@ -69,6 +83,29 @@ export class TerminalManager implements Disposable {
       this.state = 'stopped';
       throw new Error(messages.terminalCreateFailed);
     }
+  }
+
+  private async lockTerminalGroup(terminal: Terminal): Promise<void> {
+    if (!(await this.waitForActiveTerminal(terminal))) {
+      return;
+    }
+
+    try {
+      await vscodeCommands.executeCommand(lockGroupCommand);
+    } catch {
+      // Locking is a convenience: leave the group unlocked if the command is unavailable.
+    }
+  }
+
+  private async waitForActiveTerminal(terminal: Terminal): Promise<boolean> {
+    for (let attempt = 0; attempt < activeTerminalPollAttempts; attempt += 1) {
+      if (window.activeTerminal === terminal) {
+        return true;
+      }
+      await delay(activeTerminalPollIntervalMs);
+    }
+
+    return window.activeTerminal === terminal;
   }
 
   private findAvailableTerminal(): Terminal | undefined {

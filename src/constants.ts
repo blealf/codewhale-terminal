@@ -6,11 +6,17 @@ export const commands = {
   stop: 'codewhaleLauncher.stop'
 };
 
-export const viewId = 'codewhaleLauncherView';
 export const terminalName = 'CodeWhale';
 export const configurationCommandKey = 'codewhale.command';
 export const installationGuideUrl = 'https://github.com/Hmbown/CodeWhale';
 export const defaultCommand = 'codewhale';
+
+export const lockGroupCommand = 'workbench.action.lockEditorGroup';
+
+// The terminal editor becomes the active group asynchronously after show(),
+// so poll briefly before locking rather than racing it with a fixed delay.
+export const activeTerminalPollAttempts = 20;
+export const activeTerminalPollIntervalMs = 25;
 
 export const messages = {
   executableNotFound: 'CodeWhale executable not found. Install CodeWhale or configure codewhale.command.',

@@ -1,9 +1,7 @@
-import { commands, ExtensionContext, window } from 'vscode';
+import { ExtensionContext, StatusBarAlignment, window } from 'vscode';
 import { TerminalManager } from './terminalManager';
 import { InstallDetector } from './installDetector';
 import { registerCommands } from './commands';
-import { viewId } from './constants';
-import { PlaceholderViewProvider } from './placeholderView';
 
 export function activate(context: ExtensionContext): void {
   const terminalManager = new TerminalManager();
@@ -12,22 +10,13 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(...registerCommands(context, terminalManager, installDetector));
   context.subscriptions.push(terminalManager);
 
-  const placeholderProvider = new PlaceholderViewProvider();
-  const view = window.createTreeView(viewId, {
-    treeDataProvider: placeholderProvider,
-    showCollapseAll: false
-  });
+  const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
+  statusBarItem.text = '$(terminal) CodeWhale';
+  statusBarItem.command = 'codewhaleLauncher.open';
+  statusBarItem.tooltip = 'Open CodeWhale terminal';
+  statusBarItem.show();
 
-  context.subscriptions.push(view);
-  context.subscriptions.push(
-    view.onDidChangeVisibility(async (event) => {
-      if (!event.visible) {
-        return;
-      }
-
-      await commands.executeCommand('codewhaleLauncher.open');
-    })
-  );
+  context.subscriptions.push(statusBarItem);
 }
 
 export function deactivate(): void {
